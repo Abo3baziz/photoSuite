@@ -6,6 +6,16 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   fullyParallel: false,
   workers: 1,
-  reporter: [['list']],
   retries: 1,
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+  ],
+  // Local fixture site (no external websites in tests, per CI contract).
+  webServer: {
+    command: 'node scripts/serve-fixture.mjs 4173',
+    url: 'http://127.0.0.1:4173/',
+    reuseExistingServer: !process.env.CI,
+    timeout: 30_000,
+  },
 });
