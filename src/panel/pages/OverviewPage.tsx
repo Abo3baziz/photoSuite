@@ -145,10 +145,53 @@ function TabCard(): JSX.Element | null {
 }
 
 export function OverviewPage(): JSX.Element {
+  const session = usePanelStore((s) => s.session);
+  const routes = usePanelStore((s) => s.routes);
+  const auditBusy = usePanelStore((s) => s.auditBusy);
+  const startAudit = usePanelStore((s) => s.startAudit);
+  const stopAudit = usePanelStore((s) => s.stopAudit);
+
   return (
     <div className="page">
       <ConnectionPill />
       <TabCard />
+      <section className="card">
+        <h2 className="card__title">Audit session</h2>
+        {session === null ? (
+          <>
+            <p className="muted">No session running.</p>
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={auditBusy}
+              onClick={() => void startAudit()}
+            >
+              {auditBusy ? 'Starting…' : 'Start audit'}
+            </button>
+          </>
+        ) : (
+          <>
+            <dl className="facts">
+              <div className="facts__row">
+                <dt>Status</dt>
+                <dd>{session.status}</dd>
+              </div>
+              <div className="facts__row">
+                <dt>Routes</dt>
+                <dd>{routes.length}</dd>
+              </div>
+            </dl>
+            <button
+              type="button"
+              className="btn"
+              disabled={!auditBusy && session.status !== 'running'}
+              onClick={() => void stopAudit()}
+            >
+              Stop audit
+            </button>
+          </>
+        )}
+      </section>
     </div>
   );
 }

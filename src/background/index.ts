@@ -1,28 +1,33 @@
 import { handleMessageFromPanel } from './messaging/router';
 
-/**
- * Background service worker entry (Milestone 1 scope):
- * - register the side panel to open on action-click
- * - route panel messages through the validated dispatcher
- * Session orchestration, discovery, screenshots, and persistence arrive in
- * Milestones 2+ through this same entry point.
- */
-
 chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error: unknown) =>
     console.error('[web-ui-auditor] failed to set side panel behavior', error),
   );
 
-chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
-  void handleMessageFromPanel(message)
-    .then(sendResponse)
-    .catch((error: unknown) => {
-      console.error('[web-ui-auditor] unhandled message error', error);
-      sendResponse({
-        ok: false,
-        error: { code: 'INTERNAL_ERROR', message: 'An unexpected background error occurred.' },
+chrome.runtime.onMessage.addListener(
+  (message: unknown, sender: chrome.runtime.MessageSender, sendResponse) => {
+    const obj = message as { type?: unknown };
+    if (typeof obj?.type === 'string' && obj.type.startsWith('content:')) {
+      // Content-script → background channel (best-effort; never block the page).
+      if (obj.type === 'content:spaNavigation') {
+        // Recorded for future route-graph edge attribution; M2 keeps it lightweight.
+        void sender;
+      }
+      sendResponse({ ok: true });
+      return false;
+    }
+
+    void handleMessageFromPanel(message)
+      .then(sendResponse)
+      .catch((error: unknown) => {
+        console.error('[web-ui-auditor] unhandled message error', error);
+        sendResponse({
+          ok: false,
+          error: { code: 'INTERNAL_ERROR', message: 'An unexpected background error occurred.' },
+        });
       });
-    });
-  return true; // keep the message channel open for the async reply
-});
+    return true;
+  },
+);
