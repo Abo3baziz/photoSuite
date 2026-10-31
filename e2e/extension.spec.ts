@@ -1,6 +1,5 @@
 import { chromium, expect, test, type Worker } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
-import path from 'node:path';
 
 /**
  * Milestone 1 E2E: the built extension (dist/) loads into Chromium, the
@@ -18,10 +17,7 @@ test('extension installs, background starts, and the panel renders', async () =>
   const context = await chromium.launchPersistentContext('', {
     headless: true,
     channel: 'chromium',
-    args: [
-      `--disable-extensions-except=${DIST}`,
-      `--load-extension=${DIST}`,
-    ],
+    args: [`--disable-extensions-except=${DIST}`, `--load-extension=${DIST}`],
   });
   try {
     // Wait for the MV3 service worker and derive the extension id from it.

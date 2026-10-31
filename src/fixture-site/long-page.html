@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Auditor Fixture — Long page</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="fixed-header">FIXTURE HEADER (fixed)</header>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="/">Home</a></li>
+      </ul>
+    </nav>
+    <main>
+      <h1>Long page</h1>
+      <!-- long scroll body for stitch-capture tests -->
+      <div id="long-content"></div>
+      <img loading="lazy" src="/placeholder.svg" alt="lazy placeholder 1" />
+      <img loading="lazy" src="/broken-image.png" alt="lazy placeholder 2" />
+    </main>
+    <footer class="sticky-footer">FIXTURE FOOTER (sticky)</footer>
+    <script src="/long-page.js"></script>
+  </body>
+</html>

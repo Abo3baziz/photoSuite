@@ -19,7 +19,9 @@ function inspectPage(): InspectSummary {
     title: document.title,
     counts: {
       links: document.querySelectorAll('a[href]').length,
-      buttons: document.querySelectorAll('button, [role=button], input[type=button], input[type=submit]').length,
+      buttons: document.querySelectorAll(
+        'button, [role=button], input[type=button], input[type=submit]',
+      ).length,
       inputs: document.querySelectorAll('input:not([type=hidden])').length,
       textareas: document.querySelectorAll('textarea').length,
       selects: document.querySelectorAll('select').length,

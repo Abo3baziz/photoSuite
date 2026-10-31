@@ -12,15 +12,21 @@ export type RpcError = {
 };
 
 export type RpcResponse<T> =
-  | { readonly ok: true; readonly data: T }
-  | { readonly ok: false; readonly error: RpcError };
+  { readonly ok: true; readonly data: T } | { readonly ok: false; readonly error: RpcError };
 
 export function rpcOk<T>(data: T): RpcResponse<T> {
   return { ok: true, data };
 }
 
-export function rpcError(code: string, message: string, details?: unknown): { readonly ok: false; readonly error: RpcError } {
-  return { ok: false, error: details === undefined ? { code, message } : { code, message, details } };
+export function rpcError(
+  code: string,
+  message: string,
+  details?: unknown,
+): { readonly ok: false; readonly error: RpcError } {
+  return {
+    ok: false,
+    error: details === undefined ? { code, message } : { code, message, details },
+  };
 }
 
 /** Thrown by handlers; routers catch it and serialize it. */

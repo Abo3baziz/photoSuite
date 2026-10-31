@@ -4,7 +4,15 @@
   "version": "0.1.0",
   "description": "Audits the current website: discovers same-origin routes and interactive elements, explores safe interactions, captures screenshots, and generates an offline audit report.",
   "minimum_chrome_version": "116",
-  "permissions": ["sidePanel", "storage", "tabs", "activeTab", "scripting", "downloads", "webNavigation"],
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "tabs",
+    "activeTab",
+    "scripting",
+    "downloads",
+    "webNavigation"
+  ],
   "host_permissions": [],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "background": {

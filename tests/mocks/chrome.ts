@@ -49,11 +49,17 @@ export function installChromeMock(routing: ChromeMockRouting): ChromeMock {
         sentMessages.push(message);
         const type = (message as { type?: unknown }).type;
         if (typeof type !== 'string') {
-          return Promise.resolve({ ok: false, error: { code: 'MOCK', message: 'invalid message' } });
+          return Promise.resolve({
+            ok: false,
+            error: { code: 'MOCK', message: 'invalid message' },
+          });
         }
         const response = routing.responses[type];
         if (response === undefined) {
-          return Promise.resolve({ ok: false, error: { code: 'MOCK_NO_ROUTE', message: `no route for ${type}` } });
+          return Promise.resolve({
+            ok: false,
+            error: { code: 'MOCK_NO_ROUTE', message: `no route for ${type}` },
+          });
         }
         return Promise.resolve(response);
       },

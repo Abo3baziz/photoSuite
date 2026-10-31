@@ -19,7 +19,9 @@ describe('normalizeUrl', () => {
   });
 
   it('drops tracking parameters but keeps meaningful ones, sorted deterministically', () => {
-    const result = normalizeUrl('https://shop.example.com/search?b=2&fbclid=zzz&utm_source=x&a=1#g');
+    const result = normalizeUrl(
+      'https://shop.example.com/search?b=2&fbclid=zzz&utm_source=x&a=1#g',
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error('unreachable');
     expect(result.url.href).toBe('https://shop.example.com/search?a=1&b=2');
@@ -46,7 +48,9 @@ describe('normalizeUrl', () => {
 
 describe('routeKey / same-origin / auditable', () => {
   it('deduplicates equivalent routes via key', () => {
-    expect(routeKey('http://example.com:80/a?x=1&y=2')).toBe(routeKey('HTTP://example.com/a?x=1&y=2'));
+    expect(routeKey('http://example.com:80/a?x=1&y=2')).toBe(
+      routeKey('HTTP://example.com/a?x=1&y=2'),
+    );
     expect(routeKey('https://example.com/a#frag')).toBe(routeKey('https://example.com/a'));
     expect(routeKey('ftp://example.com/a')).toBeNull();
   });
@@ -73,8 +77,12 @@ describe('classification of unsupported surfaces', () => {
   });
 
   it('explains extension and devtools surfaces', () => {
-    expect(classifyUnsupportedPage('chrome-extension://abc/panel.html')?.kind).toBe('chrome-extension');
-    expect(classifyUnsupportedPage('devtools://devtools/bundled/inspector.html')?.kind).toBe('devtools');
+    expect(classifyUnsupportedPage('chrome-extension://abc/panel.html')?.kind).toBe(
+      'chrome-extension',
+    );
+    expect(classifyUnsupportedPage('devtools://devtools/bundled/inspector.html')?.kind).toBe(
+      'devtools',
+    );
   });
 
   it('returns null for auditable web origins', () => {
@@ -88,7 +96,9 @@ describe('classification of unsupported surfaces', () => {
 
 describe('permission patterns & exclusions', () => {
   it('builds per-origin permission patterns', () => {
-    expect(originPermissionPattern('https://shop.example.com/home')).toBe('https://shop.example.com/*');
+    expect(originPermissionPattern('https://shop.example.com/home')).toBe(
+      'https://shop.example.com/*',
+    );
     expect(originPermissionPattern('chrome://settings')).toBeNull();
   });
 

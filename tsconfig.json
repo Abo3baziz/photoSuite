@@ -18,7 +18,16 @@
     "useDefineForClassFields": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vite/client", "chrome"]
+    "types": ["vite/client", "chrome", "node"]
   },
-  "include": ["src", "tests", "e2e", "vite.config.ts", "vite.background.config.ts", "vitest.config.ts", "playwright.config.ts", "eslint.config.js"]
+  "include": [
+    "src",
+    "tests",
+    "e2e",
+    "vite.config.ts",
+    "vite.background.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "eslint.config.js"
+  ]
 }

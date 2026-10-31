@@ -7,5 +7,5 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],
-  retry: 0,
+  retries: 1,
 });

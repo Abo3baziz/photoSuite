@@ -45,7 +45,11 @@ export async function handleMessageFromPanel(message: unknown): Promise<RpcRespo
   try {
     const parsed = PanelRequestSchema.safeParse(message);
     if (!parsed.success) {
-      throw new DomainError('INVALID_MESSAGE', 'The message sent to the background script was not a valid request.', parsed.error.issues);
+      throw new DomainError(
+        'INVALID_MESSAGE',
+        'The message sent to the background script was not a valid request.',
+        parsed.error.issues,
+      );
     }
     return await handleValidated(parsed.data);
   } catch (error) {

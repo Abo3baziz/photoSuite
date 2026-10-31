@@ -10,14 +10,19 @@ import { handleMessageFromPanel } from './messaging/router';
 
 chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
-  .catch((error: unknown) => console.error('[web-ui-auditor] failed to set side panel behavior', error));
+  .catch((error: unknown) =>
+    console.error('[web-ui-auditor] failed to set side panel behavior', error),
+  );
 
 chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
   void handleMessageFromPanel(message)
     .then(sendResponse)
     .catch((error: unknown) => {
       console.error('[web-ui-auditor] unhandled message error', error);
-      sendResponse({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'An unexpected background error occurred.' } });
+      sendResponse({
+        ok: false,
+        error: { code: 'INTERNAL_ERROR', message: 'An unexpected background error occurred.' },
+      });
     });
   return true; // keep the message channel open for the async reply
 });

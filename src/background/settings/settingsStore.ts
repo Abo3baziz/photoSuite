@@ -21,14 +21,21 @@ export async function loadSettings(): Promise<Settings> {
 
   // Corrupt or partially valid stored settings: fall back to defaults rather
   // than failing the session path. The invalid copy is overwritten on next save.
-  console.warn('[web-ui-auditor] stored settings failed validation; using defaults', parsed.error.issues.slice(0, 3));
+  console.warn(
+    '[web-ui-auditor] stored settings failed validation; using defaults',
+    parsed.error.issues.slice(0, 3),
+  );
   return { ...DEFAULT_SETTINGS };
 }
 
 export async function saveSettings(input: unknown): Promise<Settings> {
   const parsed = SettingsSchema.safeParse(input);
   if (!parsed.success) {
-    throw new DomainError('INVALID_SETTINGS', 'The provided settings are not valid.', parsed.error.issues);
+    throw new DomainError(
+      'INVALID_SETTINGS',
+      'The provided settings are not valid.',
+      parsed.error.issues,
+    );
   }
   await chrome.storage.local.set({ [SETTINGS_KEY]: parsed.data });
   return parsed.data;

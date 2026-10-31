@@ -17,8 +17,15 @@ const TRACKING_PARAM_WHOLE = new Set([
 
 const TRACKING_PARAM_PREFIXES = ['utm_', 'mc_', 'ref_', 'hsa_'];
 
-export type UrlNormalizable = { href: string; origin: string; path: string; query: string; key: string };
-export type UrlResult = { ok: true; url: UrlNormalizable } | { ok: false; reason: 'malformed' | 'not-http' };
+export type UrlNormalizable = {
+  href: string;
+  origin: string;
+  path: string;
+  query: string;
+  key: string;
+};
+export type UrlResult =
+  { ok: true; url: UrlNormalizable } | { ok: false; reason: 'malformed' | 'not-http' };
 
 /** Purge obvious tracking parameters; cases compared lowercased. */
 export function isTrackingParam(name: string): boolean {
@@ -47,7 +54,10 @@ export function normalizeUrl(input: string): UrlResult {
   }
 
   // URL makes href canonical except for ports it retains; drop default ports.
-  if ((parsed.protocol === 'https:' && parsed.port === '443') || (parsed.protocol === 'http:' && parsed.port === '80')) {
+  if (
+    (parsed.protocol === 'https:' && parsed.port === '443') ||
+    (parsed.protocol === 'http:' && parsed.port === '80')
+  ) {
     parsed.port = '';
   }
 
@@ -77,12 +87,7 @@ export function isAuditableUrl(url: string): boolean {
 
 /** A restricted browser surface (chrome://-style pages, devtools, …). */
 export type UnsupportedPageKind =
-  | 'browser-internal'
-  | 'chrome-extension'
-  | 'devtools'
-  | 'view-source'
-  | 'unknown'
-  | 'empty';
+  'browser-internal' | 'chrome-extension' | 'devtools' | 'view-source' | 'unknown' | 'empty';
 
 /** True only for http(s) — auditors touch web origins only. */
 export function isWebUrl(url: string): boolean {
@@ -121,7 +126,9 @@ export function originPermissionPattern(input: string): string | null {
 
 /** Route exclusion prefixes are matched against the normalized path only. */
 export function isExcludedRoute(pathInput: string, prefixes: readonly string[]): boolean {
-  const path = new URL('https://unused.local' + (pathInput.startsWith('/') ? pathInput : `/${pathInput}`)).pathname;
+  const path = new URL(
+    'https://unused.local' + (pathInput.startsWith('/') ? pathInput : `/${pathInput}`),
+  ).pathname;
   return prefixes.some((prefix) => prefix.length > 0 && path.startsWith(prefix));
 }
 
@@ -130,9 +137,15 @@ export function isExcludedRoute(pathInput: string, prefixes: readonly string[]):
  * Kept deliberately explicit rather than clever (unsupported-page errors must
  * be understandable — FR-01).
  */
-export function classifyUnsupportedPage(url: string): { kind: UnsupportedPageKind; reason: string } | null {
+export function classifyUnsupportedPage(
+  url: string,
+): { kind: UnsupportedPageKind; reason: string } | null {
   const trimmed = url.trim();
-  if (trimmed === '') return { kind: 'empty', reason: 'Chrome did not expose a URL for this tab, so the auditor cannot inspect it.' };
+  if (trimmed === '')
+    return {
+      kind: 'empty',
+      reason: 'Chrome did not expose a URL for this tab, so the auditor cannot inspect it.',
+    };
   let parsed: URL;
   try {
     parsed = new URL(trimmed);
@@ -148,19 +161,29 @@ export function classifyUnsupportedPage(url: string): { kind: UnsupportedPageKin
         reason: `This is a browser-internal page (${parsed.protocol}//…). Auditing only works on http(s) websites.`,
       };
     case 'chrome-extension:':
-      return { kind: 'chrome-extension', reason: 'This is an extension page. Auditing works on websites, not extension surfaces.' };
+      return {
+        kind: 'chrome-extension',
+        reason: 'This is an extension page. Auditing works on websites, not extension surfaces.',
+      };
     case 'devtools:':
       return { kind: 'devtools', reason: 'This is a DevTools surface and cannot be audited.' };
     case 'view-source:':
-      return { kind: 'view-source', reason: 'This is a view-source surface. Open the page itself to audit it.' };
+      return {
+        kind: 'view-source',
+        reason: 'This is a view-source surface. Open the page itself to audit it.',
+      };
     case 'file:':
       return {
         kind: 'browser-internal',
-        reason: 'Local files cannot be audited unless “Allow access to file URLs” is enabled for this extension on chrome://extensions.',
+        reason:
+          'Local files cannot be audited unless “Allow access to file URLs” is enabled for this extension on chrome://extensions.',
       };
     default:
       if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-        return { kind: 'unknown', reason: `Only http(s) websites can be audited — this tab uses ${parsed.protocol}//….` };
+        return {
+          kind: 'unknown',
+          reason: `Only http(s) websites can be audited — this tab uses ${parsed.protocol}//….`,
+        };
       }
       return null;
   }

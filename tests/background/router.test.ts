@@ -17,7 +17,12 @@ describe('background message router', () => {
   });
 
   it('rejects malformed requests with INVALID_MESSAGE', async () => {
-    for (const bad of [null, {}, { type: 'bogus' }, { type: 'panel:setSettings', settings: { version: 9 } }]) {
+    for (const bad of [
+      null,
+      {},
+      { type: 'bogus' },
+      { type: 'panel:setSettings', settings: { version: 9 } },
+    ]) {
       const response = await handleMessageFromPanel(bad);
       expect(response.ok).toBe(false);
       if (!response.ok) {

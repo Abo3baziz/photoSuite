@@ -28,14 +28,22 @@ export async function getActiveTabInfo(): Promise<ActiveTabInfo> {
   const title = tab.title ?? '';
   if (!isWebUrl(url)) {
     const classified = classifyUnsupportedPage(url);
-    return { kind: 'unsupported', url: url === '' ? null : url, reason: classified?.reason ?? 'This page type cannot be audited.' };
+    return {
+      kind: 'unsupported',
+      url: url === '' ? null : url,
+      reason: classified?.reason ?? 'This page type cannot be audited.',
+    };
   }
 
   let parsedOrigin: string;
   try {
     parsedOrigin = new URL(url).origin;
   } catch {
-    return { kind: 'unsupported', url, reason: 'The tab URL could not be parsed as a web address.' };
+    return {
+      kind: 'unsupported',
+      url,
+      reason: 'The tab URL could not be parsed as a web address.',
+    };
   }
 
   return {

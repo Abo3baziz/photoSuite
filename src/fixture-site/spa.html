@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Auditor Fixture — Dashboard (SPA)</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="fixed-header">FIXTURE HEADER (fixed)</header>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="/">Home</a></li>
+      </ul>
+    </nav>
+    <main>
+      <h1>Dashboard</h1>
+      <nav aria-label="Dashboard views">
+        <button type="button" class="spa-link" data-view="overview">Overview</button>
+        <button type="button" class="spa-link" data-view="stats">Stats</button>
+        <button type="button" class="spa-link" data-view="settings-v2">Settings panel</button>
+      </nav>
+      <section id="spa-root" aria-live="polite"></section>
+    </main>
+    <footer class="sticky-footer">FIXTURE FOOTER (sticky)</footer>
+    <script src="/spa.js"></script>
+  </body>
+</html>

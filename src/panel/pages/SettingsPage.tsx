@@ -8,7 +8,11 @@ import { usePanelStore } from '../panelStore';
  * storage path. Exclusion semantics activate with discovery in Milestone 2.
  */
 
-const LIMIT_FIELDS: ReadonlyArray<{ key: keyof Settings['exploration']; label: string; hint?: string }> = [
+const LIMIT_FIELDS: ReadonlyArray<{
+  key: keyof Settings['exploration'];
+  label: string;
+  hint?: string;
+}> = [
   { key: 'maxRoutes', label: 'Maximum routes' },
   { key: 'maxActions', label: 'Maximum actions' },
   { key: 'maxVisitsPerState', label: 'Max visits per state' },
@@ -43,7 +47,9 @@ export function SettingsPage(): JSX.Element {
     return (
       <div className="page">
         <p className="muted" aria-live="polite">
-          {status === 'saving' ? 'Loading settings…' : 'Settings are unavailable while the background is unreachable.'}
+          {status === 'saving'
+            ? 'Loading settings…'
+            : 'Settings are unavailable while the background is unreachable.'}
         </p>
       </div>
     );
@@ -78,7 +84,15 @@ export function SettingsPage(): JSX.Element {
   };
 
   const statusMessage =
-    status === 'saved' ? 'Saved.' : status === 'reset' ? 'Reset to defaults.' : status === 'error' ? (error?.message ?? 'Save failed.') : status === 'saving' ? 'Saving…' : '';
+    status === 'saved'
+      ? 'Saved.'
+      : status === 'reset'
+        ? 'Reset to defaults.'
+        : status === 'error'
+          ? (error?.message ?? 'Save failed.')
+          : status === 'saving'
+            ? 'Saving…'
+            : '';
 
   return (
     <div className="page">
@@ -106,9 +120,14 @@ export function SettingsPage(): JSX.Element {
           <input
             type="checkbox"
             checked={settings.capture.fullPage}
-            onChange={(event) => updateSettings({ ...settings, capture: { fullPage: event.target.checked } })}
+            onChange={(event) =>
+              updateSettings({ ...settings, capture: { fullPage: event.target.checked } })
+            }
           />
-          <span>Capture full-page screenshots by scrolling and stitching (fixed elements suppressed during capture)</span>
+          <span>
+            Capture full-page screenshots by scrolling and stitching (fixed elements suppressed
+            during capture)
+          </span>
         </label>
       </section>
 
@@ -132,11 +151,18 @@ export function SettingsPage(): JSX.Element {
             onChange={(event) => setElementDraft(event.target.value)}
           />
         </label>
-        <p className="muted">Exclusions persist now and take effect as route and element discovery land (Milestone 2).</p>
+        <p className="muted">
+          Exclusions persist now and take effect as route and element discovery land (Milestone 2).
+        </p>
       </section>
 
       <div className="actions">
-        <button type="button" className="btn btn--primary" onClick={handleSave} disabled={status === 'saving'}>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={handleSave}
+          disabled={status === 'saving'}
+        >
           Save settings
         </button>
         <button type="button" className="btn" onClick={handleReset} disabled={status === 'saving'}>

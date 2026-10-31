@@ -7,7 +7,11 @@ function ConnectionPill(): JSX.Element {
   const connection = usePanelStore((s) => s.connection);
   return (
     <span className={`pill pill--${connection}`}>
-      {connection === 'connected' ? 'Connected to background' : connection === 'connecting' ? 'Connecting…' : 'Background unreachable'}
+      {connection === 'connected'
+        ? 'Connected to background'
+        : connection === 'connecting'
+          ? 'Connecting…'
+          : 'Background unreachable'}
     </span>
   );
 }
@@ -24,7 +28,9 @@ function TabCard(): JSX.Element | null {
     return (
       <section className="card" aria-live="polite">
         <h2 className="card__title">Current website</h2>
-        <p className="muted">Unable to reach the background service worker. Reload this panel and try again.</p>
+        <p className="muted">
+          Unable to reach the background service worker. Reload this panel and try again.
+        </p>
       </section>
     );
   }
@@ -80,7 +86,12 @@ function TabCard(): JSX.Element | null {
 
       {hasOriginPermission && (
         <>
-          <button type="button" className="btn btn--primary" disabled={inspectBusy} onClick={() => void inspect()}>
+          <button
+            type="button"
+            className="btn btn--primary"
+            disabled={inspectBusy}
+            onClick={() => void inspect()}
+          >
             {inspectBusy ? 'Inspecting…' : 'Inspect page'}
           </button>
           {error !== null && (
@@ -121,7 +132,8 @@ function TabCard(): JSX.Element | null {
               <div className="facts__row">
                 <dt>Viewport</dt>
                 <dd>
-                  {inspectResult.viewport.width}×{inspectResult.viewport.height} @ {inspectResult.viewport.devicePixelRatio}x
+                  {inspectResult.viewport.width}×{inspectResult.viewport.height} @{' '}
+                  {inspectResult.viewport.devicePixelRatio}x
                 </dd>
               </div>
             </div>

@@ -3,7 +3,11 @@ import type {
   ContentRequest,
   InspectSummary,
 } from '../../shared/messaging/protocol';
-import { ActiveTabInfoSchema, ContentInspectPageRequestSchema, InspectSummarySchema } from '../../shared/messaging/protocol';
+import {
+  ActiveTabInfoSchema,
+  ContentInspectPageRequestSchema,
+  InspectSummarySchema,
+} from '../../shared/messaging/protocol';
 import { SettingsSchema } from '../../shared/config/settings';
 import type { Settings } from '../../shared/config/settings';
 import { parseRpcEnvelope, rpcError, type RpcResponse } from '../../shared/messaging/rpc';
@@ -21,7 +25,10 @@ export async function callBackground(message: unknown): Promise<RpcResponse<unkn
     const raw: unknown = await chrome.runtime.sendMessage(message);
     return parseRpcEnvelope(raw);
   } catch (error) {
-    return rpcError('BACKGROUND_UNREACHABLE', error instanceof Error ? error.message : 'The background service worker did not respond.');
+    return rpcError(
+      'BACKGROUND_UNREACHABLE',
+      error instanceof Error ? error.message : 'The background service worker did not respond.',
+    );
   }
 }
 
@@ -36,7 +43,9 @@ export async function inspectPage(): Promise<RpcResponse<InspectSummary>> {
   const response = await callBackground({ type: 'panel:inspectPage' });
   if (!response.ok) return response;
   const parsed = InspectSummarySchema.safeParse(response.data);
-  return parsed.success ? { ok: true, data: parsed.data } : rpcError('INVALID_RESPONSE', 'Inspection result failed validation.');
+  return parsed.success
+    ? { ok: true, data: parsed.data }
+    : rpcError('INVALID_RESPONSE', 'Inspection result failed validation.');
 }
 
 export async function getSettings(): Promise<Settings | null> {
@@ -50,7 +59,9 @@ export async function saveSettings(settings: Settings): Promise<RpcResponse<Sett
   const response = await callBackground({ type: 'panel:setSettings', settings });
   if (!response.ok) return response;
   const parsed = SettingsSchema.safeParse(response.data);
-  return parsed.success ? { ok: true, data: parsed.data } : rpcError('INVALID_RESPONSE', 'Saved settings failed validation.');
+  return parsed.success
+    ? { ok: true, data: parsed.data }
+    : rpcError('INVALID_RESPONSE', 'Saved settings failed validation.');
 }
 
 export async function resetSettings(): Promise<Settings | null> {

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Auditor Fixture — Home</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="fixed-header">FIXTURE HEADER (fixed)</header>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="/about.html">About (traditional page navigation)</a></li>
+        <li><a href="/forms.html">Forms &amp; validation</a></li>
+        <li><a href="/spa.html">Dashboard (SPA navigation)</a></li>
+        <li><a href="/long-page.html">Long page</a></li>
+        <li><a href="/nonexistent-page">Dead link (intentionally broken)</a></li>
+        <li>
+          <a href="https://example.com/external" rel="noopener"
+            >External site (must be rejected by audit engine)</a
+          >
+        </li>
+      </ul>
+    </nav>
+    <main>
+      <h1>Auditor Fixture</h1>
+      <p>Deterministic multi-page + SPA fixture for extension E2E testing.</p>
+      <section aria-label="Interactive controls">
+        <button id="open-modal" type="button">Open modal</button>
+        <button id="noop-button" type="button">No-op button</button>
+        <button id="disabled-button" type="button" disabled>Disabled control</button>
+        <button id="destructive-button" type="button" data-risk="destructive">
+          Delete everything (must never auto-execute)
+        </button>
+      </section>
+      <section
+        aria-live="polite"
+        id="fixture-log"
+        class="log"
+        aria-label="Fixture event log"
+      ></section>
+    </main>
+    <dialog id="modal">
+      <p>Fixture modal content.</p>
+      <button id="close-modal" type="button">Close</button>
+    </dialog>
+    <footer class="sticky-footer">FIXTURE FOOTER (sticky)</footer>
+    <script src="/index.js"></script>
+  </body>
+</html>

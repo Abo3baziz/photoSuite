@@ -1,5 +1,8 @@
 import type { InspectSummary, ActiveTabInfo } from '../shared/messaging/protocol';
-import { ContentInspectPageRequestSchema, InspectSummarySchema } from '../shared/messaging/protocol';
+import {
+  ContentInspectPageRequestSchema,
+  InspectSummarySchema,
+} from '../shared/messaging/protocol';
 import { DomainError, rpcError, rpcOk, type RpcResponse } from '../shared/messaging/rpc';
 import { getActiveTab, getActiveTabInfo } from './tabs/tabInspector';
 
@@ -11,13 +14,22 @@ import { getActiveTab, getActiveTabInfo } from './tabs/tabInspector';
 
 const CONTENT_SCRIPT_FILE = 'content.js';
 
-export type PageInspectFailureCode = 'NO_ACTIVE_TAB' | 'UNSUPPORTED_PAGE' | 'NEEDS_ORIGIN_PERMISSION' | 'INJECTION_FAILED' | 'INSPECT_TIMEOUT';
+export type PageInspectFailureCode =
+  | 'NO_ACTIVE_TAB'
+  | 'UNSUPPORTED_PAGE'
+  | 'NEEDS_ORIGIN_PERMISSION'
+  | 'INJECTION_FAILED'
+  | 'INSPECT_TIMEOUT';
 
 async function ensureContentScript(tabId: number): Promise<void> {
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: [CONTENT_SCRIPT_FILE] });
   } catch (error) {
-    throw new DomainError('INJECTION_FAILED', `Could not inject the auditor into this page.`, asMessage(error));
+    throw new DomainError(
+      'INJECTION_FAILED',
+      `Could not inject the auditor into this page.`,
+      asMessage(error),
+    );
   }
 }
 
@@ -49,14 +61,19 @@ export async function inspectActiveTab(): Promise<RpcResponse<InspectSummary>> {
     return rpcError('UNSUPPORTED_PAGE', info.reason, { url: info.url });
   }
   if (!info.hasOriginPermission) {
-    return rpcError('NEEDS_ORIGIN_PERMISSION', 'This origin has not been granted host access yet. Grant access, then inspect.', {
-      origin: info.origin,
-    });
+    return rpcError(
+      'NEEDS_ORIGIN_PERMISSION',
+      'This origin has not been granted host access yet. Grant access, then inspect.',
+      {
+        origin: info.origin,
+      },
+    );
   }
 
   const tab = await getActiveTab();
   const tabId = tab?.id;
-  if (!tabId) return rpcError('NO_ACTIVE_TAB', 'The active tab closed while starting the inspection.');
+  if (!tabId)
+    return rpcError('NO_ACTIVE_TAB', 'The active tab closed while starting the inspection.');
 
   try {
     await ensureContentScript(tabId);
@@ -66,15 +83,29 @@ export async function inspectActiveTab(): Promise<RpcResponse<InspectSummary>> {
   }
 
   try {
-    const summary = await withTimeout(requestInspect(tabId), 5_000, 'INSPECT_TIMEOUT', 'The page inspection timed out.');
+    const summary = await withTimeout(
+      requestInspect(tabId),
+      5_000,
+      'INSPECT_TIMEOUT',
+      'The page inspection timed out.',
+    );
     return rpcOk(summary);
   } catch (error) {
     if (error instanceof DomainError) return rpcError(error.code, error.message, error.details);
-    return rpcError('INSPECT_FAILED', 'The inspection response could not be validated.', asMessage(error));
+    return rpcError(
+      'INSPECT_FAILED',
+      'The inspection response could not be validated.',
+      asMessage(error),
+    );
   }
 }
 
-export async function withTimeout<T>(promise: Promise<T>, ms: number, code: string, message: string): Promise<T> {
+export async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  code: string,
+  message: string,
+): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_resolve, reject) => {
     timer = setTimeout(() => reject(new DomainError(code, message)), ms);

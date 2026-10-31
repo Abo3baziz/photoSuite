@@ -1,0 +1,38 @@
+:root {
+  --header-h: 48px;
+}
+body {
+  margin: 60px 0 60px;
+  font-family: system-ui, sans-serif;
+}
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-h);
+  background: #24489f;
+  color: white;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  z-index: 10;
+}
+.sticky-footer {
+  position: sticky;
+  bottom: 0;
+  background: #e8ecf4;
+  padding: 8px 16px;
+}
+.log {
+  min-height: 40px;
+  font-family: monospace;
+  white-space: pre-line;
+  background: #f4f6fa;
+  padding: 8px;
+}
+section,
+main {
+  padding: 8px 16px;
+}

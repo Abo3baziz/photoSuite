@@ -11,7 +11,8 @@ import { installChromeMock, type ChromeMock } from '../mocks/chrome';
  * plain-language message (FR-01).
  */
 
-const UNSUPPORTED_REASON = 'This is a browser-internal page (chrome://…). Auditing only works on http(s) websites.';
+const UNSUPPORTED_REASON =
+  'This is a browser-internal page (chrome://…). Auditing only works on http(s) websites.';
 
 const SETTINGS_OK = {
   version: 1,
@@ -44,7 +45,11 @@ afterEach(() => {
 
 describe('<App />', () => {
   it('renders the shell and reports an unsupported page clearly', async () => {
-    const mock = installFor({ kind: 'unsupported', url: 'chrome://settings/', reason: UNSUPPORTED_REASON });
+    const mock = installFor({
+      kind: 'unsupported',
+      url: 'chrome://settings/',
+      reason: UNSUPPORTED_REASON,
+    });
     const { App } = await import('../../src/panel/App');
     render(React.createElement(App));
 
