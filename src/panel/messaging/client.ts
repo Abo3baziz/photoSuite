@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type {
   ActiveTabInfo,
   ContentRequest,
@@ -8,10 +9,15 @@ import {
   ContentInspectPageRequestSchema,
   InspectSummarySchema,
 } from '../../shared/messaging/protocol';
+import type { AuditSession } from '../../shared/domain/auditSession';
+import { AuditSessionSchema } from '../../shared/domain/auditSession';
+import type { Route } from '../../shared/domain/route';
+import { RouteSchema } from '../../shared/domain/route';
+import type { UIElement } from '../../shared/domain/uiElement';
+import { UIElementSchema } from '../../shared/domain/uiElement';
 import { SettingsSchema } from '../../shared/config/settings';
 import type { Settings } from '../../shared/config/settings';
 import { parseRpcEnvelope, rpcError, type RpcResponse } from '../../shared/messaging/rpc';
-import { grantOriginPermission } from '../permissions/originPermissions';
 
 /**
  * Panel-side client. The panel never imports background modules (AGENTS.md 4):
@@ -76,4 +82,39 @@ export function contentInspectRequest(): ContentRequest {
   return ContentInspectPageRequestSchema.parse({ type: 'content:inspectPage' });
 }
 
-export { grantOriginPermission };
+export async function startAudit(tabId?: number): Promise<RpcResponse<{ sessionId: string }>> {
+  const response = await callBackground({ type: 'panel:startAudit', tabId });
+  if (!response.ok) return response;
+  const data = response.data as { sessionId?: unknown };
+  if (typeof data?.sessionId !== 'string')
+    return rpcError('INVALID_RESPONSE', 'Audit start did not return a session id.');
+  return { ok: true, data: { sessionId: data.sessionId } };
+}
+
+export async function stopAudit(sessionId: string): Promise<RpcResponse<{ stopped: boolean }>> {
+  const response = await callBackground({ type: 'panel:stopAudit', sessionId });
+  if (!response.ok) return response;
+  return { ok: true, data: { stopped: true } };
+}
+
+export async function getSession(sessionId?: string): Promise<AuditSession | null> {
+  const response = await callBackground({ type: 'panel:getSession', sessionId });
+  if (!response.ok) return null;
+  if (response.data === null) return null;
+  const parsed = AuditSessionSchema.safeParse(response.data);
+  return parsed.success ? parsed.data : null;
+}
+
+export async function listRoutes(sessionId: string): Promise<Route[]> {
+  const response = await callBackground({ type: 'panel:listRoutes', sessionId });
+  if (!response.ok) return [];
+  const parsed = z.array(RouteSchema).safeParse(response.data);
+  return parsed.success ? parsed.data : [];
+}
+
+export async function listElements(screenStateId: string): Promise<UIElement[]> {
+  const response = await callBackground({ type: 'panel:listElements', screenStateId });
+  if (!response.ok) return [];
+  const parsed = z.array(UIElementSchema).safeParse(response.data);
+  return parsed.success ? parsed.data : [];
+}

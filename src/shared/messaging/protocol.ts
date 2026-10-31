@@ -34,6 +34,31 @@ export const ResetSettingsRequestSchema = z.object({
   type: z.literal('panel:resetSettings'),
 });
 
+export const StartAuditRequestSchema = z.object({
+  type: z.literal('panel:startAudit'),
+  tabId: z.number().int().optional(),
+});
+
+export const StopAuditRequestSchema = z.object({
+  type: z.literal('panel:stopAudit'),
+  sessionId: z.string().min(1),
+});
+
+export const GetSessionRequestSchema = z.object({
+  type: z.literal('panel:getSession'),
+  sessionId: z.string().min(1).optional(),
+});
+
+export const ListRoutesRequestSchema = z.object({
+  type: z.literal('panel:listRoutes'),
+  sessionId: z.string().min(1),
+});
+
+export const ListElementsRequestSchema = z.object({
+  type: z.literal('panel:listElements'),
+  screenStateId: z.string().min(1),
+});
+
 export const PanelRequestSchema = z.discriminatedUnion('type', [
   PingRequestSchema,
   GetActiveTabInfoRequestSchema,
@@ -41,6 +66,11 @@ export const PanelRequestSchema = z.discriminatedUnion('type', [
   GetSettingsRequestSchema,
   SetSettingsRequestSchema,
   ResetSettingsRequestSchema,
+  StartAuditRequestSchema,
+  StopAuditRequestSchema,
+  GetSessionRequestSchema,
+  ListRoutesRequestSchema,
+  ListElementsRequestSchema,
 ]);
 
 export type PanelRequest = z.infer<typeof PanelRequestSchema>;
