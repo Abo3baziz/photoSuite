@@ -49,6 +49,16 @@
 - **Decision**: viewport PNGs are stored in `screenshotBlobs` keyed 1:1 by `Screenshot.id`; stitching runs in SW `OffscreenCanvas` (blob→`createImageBitmap`→composite→`convertToBlob`). Sticky/fixed suppression is injected via content script before scrolling, then restored; seam metadata recorded (`seamCount`, `suppressRuleApplied`).
 - **Consequence**: query-time metadata stays small; export streams blobs efficiently.
 
-## D8 — Package/tooling versions (2026-10-31)
+## D8 — Package/tooling versions (2026-10-31, actual installed)
 
-- Vite 7.x, TypeScript ~5.9, React 19, Tailwind 4 (via `@tailwindcss/vite`), Zustand 5, Dexie 4, Zod 4, Vitest 3 (+ jsdom, `@testing-library/react`), Playwright 1.5x (Chromium channel), JSZip 3, ESLint 9 flat config. Chrome-for-Testing for E2E. Locked to current stable minors at scaffolding; exact pins recorded in `package.json`.
+- Runtime: React 19.3, Zustand 5.0, Dexie 4.4, Zod 4.6, JSZip 3.10.
+- Build/dev: TypeScript 7.0 (native compiler), Vite 8, esbuild 0.28, Vitest 5, jsdom 30, React Testing Library 16, fake-indexeddb 6, ESLint 10 + typescript-eslint 8, Playwright 1.64, `@types/chrome` 0.3. Pinned via `package.json` (caret ranges). Styling is plain CSS — see D9 (Tailwind removed at user decision).
+- Note: these are newer majors than the spec's suggested era; chosen for stability on Node 22. If a version proves incompatible (notably TS7 native), downgrade criteria: replace caret with exact pin and document here.
+
+## D9 — Styling: plain hand-rolled CSS (spec deviation, by user decision 2026-10-31)
+
+- **Context**: `PROMPT.md` specified Tailwind CSS for the panel/report UI.
+- **User decision (overriding spec)**: do **not** use Tailwind; use plain, normal CSS.
+- **Decision**: hand-written CSS with custom properties (design tokens: colors, spacing, typography, radii) and component-scoped class names in `src/panel/styles.css`. No CSS-in-JS, no utility framework.
+- **Consequences**: zero CSS build plugins; slightly more manual class authoring; leaner bundle. The M6 report ships its own embedded `<style>` reusing the same token values for visual consistency.
+- Note: `PROMPT.md`'s stack list still says Tailwind; this entry supersedes it for styling.
