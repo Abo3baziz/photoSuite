@@ -10,7 +10,7 @@
 | Component (panel) | Vitest + jsdom + React Testing Library | `src/panel/**/*.test.tsx` |
 | Persistence | Vitest + `fake-indexeddb` | `src/db/**/*.test.ts` |
 | Integration | Vitest with fake chrome-runtime stubs | `tests/integration/**` |
-| E2E (extension) | Playwright, persistent context loading unpacked build, Chromium (canary-safe channel documented below) | `e2e/**` |
+| E2E (extension) | Playwright 1.64, persistent context loading unpacked build, Chromium channel (new headless) | `e2e/**` |
 
 - `shared/` has no browser APIs so most logic is node-testable without mocks.
 - Chrome API mocks: hand-rolled minimal typed stubs (no heavy library); validated against real API in E2E.
@@ -28,8 +28,8 @@ Static Vite-served (or `pnpm fixture` port) multi-page + SPA mixed site intentio
 
 ## E2E setup
 
-- Build extension (`pnpm build`) → launch Playwright Chromium (channel: `chrome` if present, else bundled Chromium; documented difference) with `--load-extension=dist` and a persistent profile. Headed mode is used (extension APIs under `--headless=new` have historically been partial; the exact channel and mode used will be documented after first E2E run on this machine).
-- Panel pages tested by opening `chrome-extension://<id>/panel.html` (idable) and via `chrome.sidePanel` behavior where scriptable.
+- Build extension (`pnpm build`) → launch Playwright Chromium (channel: `chromium`, new-headless build — the `chromium_headless_shell` binary does **not** support extensions, confirmed 2026-10-31) with `--disable-extensions-except` and `--load-extension` pointing at `dist/`, persistent context.
+- Panel pages tested by opening `chrome-extension://<id>/panel.html` directly; the extension id is derived from the registered service worker's URL.
 
 ## Commands
 

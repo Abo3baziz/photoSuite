@@ -44,7 +44,7 @@
 | `src/fixture-site/**` | Static test app for E2E (multi-route, SPA, forms, modals, errors, lazies, destructive controls) | nothing |
 | `e2e/**` | Playwright with unpacked extension | nothing |
 
-Circular dependencies are forbidden; ESLint `import/no-cycle` enforces this.
+Circular dependencies are forbidden. The MVP relies on review discipline (the `import/no-cycle` ESLint plugin is not currently installed; revisit when the dependency graph grows in M2–M4).
 
 ## 3. Component responsibilities
 
