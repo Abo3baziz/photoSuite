@@ -34,9 +34,10 @@ function inspectPage(): InspectSummary {
   };
 }
 
+import { ExclusionsSchema } from '../shared/config/settings';
 import { discoverElements, discoverRoutesFromDocument } from './discovery/discovery';
 import { installSpaObserver } from './observation/spaObserver';
-import { ExclusionsSchema } from '../shared/config/settings';
+import { executeAction } from './interaction/actions';
 
 function handleMessage(request: unknown): RpcResponse<unknown> | null {
   const parsed = ContentRequestSchema.safeParse(request);
@@ -59,6 +60,58 @@ function handleMessage(request: unknown): RpcResponse<unknown> | null {
   switch (obj.type) {
     case 'content:ping':
       return rpcOk({ ok: true });
+
+    case 'content:executeAction': {
+      const payload = obj as { css?: unknown; actionType?: unknown; params?: unknown };
+      const css = typeof payload.css === 'string' ? payload.css : '';
+      const actionType = payload.actionType as 'click' | 'type' | 'select' | 'toggle' | 'focus' | 'keyboard' | 'scroll';
+      const params = (payload.params && typeof payload.params === 'object' ? payload.params : {}) as { value?: string; key?: string; scrollX?: number; scrollY?: number };
+      // executeAction is async (stability wait); handle via async path below.
+      void css;
+      void actionType;
+      void params;
+      return null;
+    }
+
+    case 'content:getViewportInfo': {
+      return rpcOk({
+        scrollWidth: document.documentElement.scrollWidth,
+        scrollHeight: document.documentElement.scrollHeight,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        devicePixelRatio: window.devicePixelRatio,
+      });
+    }
+
+    case 'content:scrollForCapture': {
+      const payload = obj as { x?: number; y?: number };
+      const x = typeof payload.x === 'number' ? payload.x : 0;
+      const y = typeof payload.y === 'number' ? payload.y : 0;
+      window.scrollTo(x, y);
+      return rpcOk({ ok: true });
+    }
+
+    case 'content:suppressFixed': {
+      const payload = obj as { enabled?: boolean };
+      const enabled = payload.enabled === true;
+      const styleId = 'web-ui-auditor-suppress-fixed';
+      let style = document.getElementById(styleId) as HTMLStyleElement | null;
+      if (enabled) {
+        if (!style) {
+          style = document.createElement('style');
+          style.id = styleId;
+          style.textContent = 'html.web-ui-auditor-suppress *, body.web-ui-auditor-suppress * { position: static !important; }';
+          document.head.appendChild(style);
+        }
+        document.documentElement.classList.add('web-ui-auditor-suppress');
+        document.body.classList.add('web-ui-auditor-suppress');
+      } else {
+        document.documentElement.classList.remove('web-ui-auditor-suppress');
+        document.body.classList.remove('web-ui-auditor-suppress');
+        style?.remove();
+      }
+      return rpcOk({ ok: true });
+    }
 
     case 'content:discoverRoutes': {
       const payload = obj as { depth?: number; exclusions?: unknown };
@@ -107,7 +160,30 @@ if (!globalScope.__webUiAuditorInstalled) {
         );
       return true;
     }
-    // SPA navigation relay from this same script is handled by spaObserver.
-    return false;
+    // Async path: action execution needs stability wait.
+    if (obj?.type === 'content:executeAction') {
+      const payload = obj as { css?: unknown; actionType?: unknown; params?: unknown };
+      const css = typeof payload.css === 'string' ? payload.css : '';
+      const actionType = payload.actionType as
+        | 'click'
+        | 'type'
+        | 'select'
+        | 'toggle'
+        | 'focus'
+        | 'keyboard'
+        | 'scroll';
+      const params = (payload.params && typeof payload.params === 'object' ? payload.params : {}) as {
+        value?: string;
+        key?: string;
+        scrollX?: number;
+        scrollY?: number;
+      };
+      void executeAction(css, actionType, params)
+        .then((result) => sendResponse(rpcOk(result)))
+        .catch((error) =>
+          sendResponse(rpcError('ACTION_FAILED', error instanceof Error ? error.message : String(error))),
+        );
+      return true;
+    }
   });
 }

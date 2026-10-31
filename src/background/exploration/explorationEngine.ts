@@ -1,8 +1,8 @@
-import {
-  routeRepository,
-  screenStateRepository,
-  uiElementRepository,
-} from '../session/sessionManager';
+import { routeRepository, screenStateRepository, uiElementRepository } from '../session/sessionManager';
+import { interactionRepository } from '../../db/repositories/interactionRepository';
+import { reviewQueueRepository } from '../../db/repositories/reviewQueueRepository';
+import { stateTransitionRepository } from '../../db/repositories/stateTransitionRepository';
+import { captureViewport } from '../screenshots/screenshotEngine';
 import { navigateTab, injectContentScript } from '../navigation/navManager';
 import type { AuditSession } from '../../shared/domain/auditSession';
 import { classifyRisk } from '../../shared/safety/risk';
@@ -76,6 +76,8 @@ export async function runExploration(
 ): Promise<void> {
   const limits = session.limits;
   const visitedKeys = new Set<string>();
+  const executedIdentities = new Set<string>();
+  let interactionsAttempted = 0;
   const queue: Array<{ url: string; depth: number }> = [];
   const startNormalized = normalizeUrl(session.startUrl);
   if (startNormalized.ok) {
@@ -218,8 +220,112 @@ export async function runExploration(
         visible: el.visible,
         iframeKey: el.iframeKey,
       }));
-      await uiElementRepository.addMany(newElements);
+      const createdElements = await uiElementRepository.addMany(newElements);
       elementsDiscovered += newElements.length;
+
+      // Interaction pass: execute low/medium-risk visible+enabled elements once.
+      for (const element of createdElements) {
+        if (interactionsAttempted >= limits.maxActions) break;
+        if (executedIdentities.has(element.identityHash)) continue;
+        executedIdentities.add(element.identityHash);
+
+        if (element.riskClass === 'high' || element.riskClass === 'critical') {
+          const ix = await interactionRepository.create({
+            sessionId: session.id,
+            targetElementId: element.id,
+            screenStateId: state.id,
+            actionType: 'click',
+            params: {},
+            status: 'skipped',
+            skipReason: 'risk',
+            durationMs: null,
+            error: null,
+            beforeScreenshotId: null,
+            afterScreenshotId: null,
+            uiStateIdAfter: null,
+          });
+          void ix;
+          await reviewQueueRepository.enqueue(session.id, element.id, `risk:${element.riskClass}`);
+          continue;
+        }
+        if (!element.visible || !element.enabled) {
+          await interactionRepository.create({
+            sessionId: session.id,
+            targetElementId: element.id,
+            screenStateId: state.id,
+            actionType: 'click',
+            params: {},
+            status: 'skipped',
+            skipReason: element.visible ? 'disabled' : 'not-visible',
+            durationMs: null,
+            error: null,
+            beforeScreenshotId: null,
+            afterScreenshotId: null,
+            uiStateIdAfter: null,
+          });
+          continue;
+        }
+
+        interactionsAttempted += 1;
+        const beforeShot = await captureViewport(session.id, tabId, state.id, null, 'before');
+        const started = Date.now();
+        let actionResult: { ok: boolean; durationMs: number; error: string | null; stateChanged: boolean };
+        try {
+          const res = await sendContentMessage<{
+            ok: boolean;
+            actionType: string;
+            durationMs: number;
+            error: string | null;
+            stateChanged: boolean;
+          }>(tabId, {
+            type: 'content:executeAction',
+            css: element.selectors.css,
+            actionType: 'click',
+            params: {},
+          });
+          actionResult = res
+            ? { ok: res.ok, durationMs: res.durationMs, error: res.error, stateChanged: res.stateChanged }
+            : { ok: false, durationMs: Date.now() - started, error: 'no response', stateChanged: false };
+        } catch (error) {
+          actionResult = { ok: false, durationMs: Date.now() - started, error: error instanceof Error ? error.message : String(error), stateChanged: false };
+        }
+        const afterShot = await captureViewport(session.id, tabId, state.id, null, 'after');
+
+        let afterStateId: string | null = null;
+        if (actionResult.stateChanged) {
+          const afterFingerprint = await identityHash([currentUrl, 'after', element.id, String(Date.now())]);
+          const afterState = await screenStateRepository.upsert(session.id, {
+            sessionId: session.id,
+            routeId: state.routeId,
+            url: currentUrl,
+            fingerprint: afterFingerprint,
+            isOverlayActive: false,
+            viewport: state.viewport,
+          });
+          afterStateId = afterState.id;
+          await stateTransitionRepository.add({
+            sessionId: session.id,
+            fromStateId: state.id,
+            toStateId: afterState.id,
+            interactionId: null,
+          });
+        }
+
+        await interactionRepository.create({
+          sessionId: session.id,
+          targetElementId: element.id,
+          screenStateId: state.id,
+          actionType: 'click',
+          params: {},
+          status: actionResult.ok ? 'succeeded' : 'failed',
+          skipReason: null,
+          durationMs: actionResult.durationMs,
+          error: actionResult.error,
+          beforeScreenshotId: beforeShot?.screenshotId ?? null,
+          afterScreenshotId: afterShot?.screenshotId ?? null,
+          uiStateIdAfter: afterStateId,
+        });
+      }
     }
 
     onProgress({

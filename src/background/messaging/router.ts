@@ -15,10 +15,10 @@ import {
   getSession,
   listSessions,
   terminateSession,
-  getSessionRoutes,
 } from '../session/sessionManager';
 import { inspectActiveTab } from '../pageInspector';
 import { uiElementRepository } from '../../db/repositories/uiElementRepository';
+import { interactionRepository } from '../../db/repositories/interactionRepository';
 import { auditSessionRepository } from '../../db/repositories/auditSessionRepository';
 
 /**
@@ -100,14 +100,16 @@ async function handleValidated(request: PanelRequest): Promise<RpcResponse<unkno
       const sessions = await listSessions();
       return rpcOk(sessions[0] ?? null);
     }
-    case 'panel:listRoutes': {
-      const routes = await getSessionRoutes(request.sessionId);
-      return rpcOk(routes);
+    case 'panel:listInteractions': {
+      const interactions = await interactionRepository.listBySession(request.sessionId);
+      return rpcOk(interactions);
     }
     case 'panel:listElements': {
       const elements = await uiElementRepository.listByState(request.screenStateId);
       return rpcOk(elements);
     }
+    default:
+      throw new DomainError('UNKNOWN_MESSAGE', 'Unhandled message type.');
   }
 }
 

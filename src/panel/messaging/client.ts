@@ -13,6 +13,8 @@ import type { AuditSession } from '../../shared/domain/auditSession';
 import { AuditSessionSchema } from '../../shared/domain/auditSession';
 import type { Route } from '../../shared/domain/route';
 import { RouteSchema } from '../../shared/domain/route';
+import type { Interaction } from '../../shared/domain/interaction';
+import { InteractionSchema } from '../../shared/domain/interaction';
 import type { UIElement } from '../../shared/domain/uiElement';
 import { UIElementSchema } from '../../shared/domain/uiElement';
 import { SettingsSchema } from '../../shared/config/settings';
@@ -116,5 +118,12 @@ export async function listElements(screenStateId: string): Promise<UIElement[]> 
   const response = await callBackground({ type: 'panel:listElements', screenStateId });
   if (!response.ok) return [];
   const parsed = z.array(UIElementSchema).safeParse(response.data);
+  return parsed.success ? parsed.data : [];
+}
+
+export async function listInteractions(sessionId: string): Promise<Interaction[]> {
+  const response = await callBackground({ type: 'panel:listInteractions', sessionId });
+  if (!response.ok) return [];
+  const parsed = z.array(InteractionSchema).safeParse(response.data);
   return parsed.success ? parsed.data : [];
 }

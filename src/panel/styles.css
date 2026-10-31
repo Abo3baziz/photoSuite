@@ -289,3 +289,37 @@ body {
 .actions .btn {
   margin-top: 0;
 }
+
+/* --- route / interaction lists ------------------------------------------- */
+
+.route-list,
+.interaction-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.route-list__item,
+.interaction-list__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.route-list__url {
+  font-family: var(--mono);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.interaction-list__type {
+  font-weight: 600;
+}

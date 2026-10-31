@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ActiveTabInfo, InspectSummary } from '../shared/messaging/protocol';
 import type { AuditSession } from '../shared/domain/auditSession';
+import type { Interaction } from '../shared/domain/interaction';
 import type { Route } from '../shared/domain/route';
 import type { Settings } from '../shared/config/settings';
 import type { RpcError } from '../shared/messaging/rpc';
@@ -9,6 +10,7 @@ import {
   getSettings as fetchSettings,
   getSession,
   inspectPage,
+  listInteractions,
   listRoutes,
   resetSettings as sendResetSettings,
   saveSettings as sendSaveSettings,
@@ -29,6 +31,7 @@ export interface PanelState {
   error: RpcError | null;
   session: AuditSession | null;
   routes: Route[];
+  interactions: Interaction[];
   auditBusy: boolean;
   initialize: () => Promise<void>;
   refreshTab: () => Promise<void>;
@@ -39,6 +42,7 @@ export interface PanelState {
   startAudit: () => Promise<void>;
   stopAudit: () => Promise<void>;
   refreshRoutes: () => Promise<void>;
+  refreshInteractions: () => Promise<void>;
 }
 
 export const usePanelStore = create<PanelState>((set) => ({
@@ -51,6 +55,7 @@ export const usePanelStore = create<PanelState>((set) => ({
   error: null,
   session: null,
   routes: [],
+  interactions: [],
   auditBusy: false,
 
   initialize: async () => {
@@ -140,5 +145,12 @@ export const usePanelStore = create<PanelState>((set) => ({
     if (!session) return;
     const routes = await listRoutes(session.id);
     set({ routes });
+  },
+
+  refreshInteractions: async () => {
+    const { session } = usePanelStore.getState();
+    if (!session) return;
+    const interactions = await listInteractions(session.id);
+    set({ interactions });
   },
 }));

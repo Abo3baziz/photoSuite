@@ -59,6 +59,11 @@ export const ListElementsRequestSchema = z.object({
   screenStateId: z.string().min(1),
 });
 
+export const ListInteractionsRequestSchema = z.object({
+  type: z.literal('panel:listInteractions'),
+  sessionId: z.string().min(1),
+});
+
 export const PanelRequestSchema = z.discriminatedUnion('type', [
   PingRequestSchema,
   GetActiveTabInfoRequestSchema,
@@ -71,6 +76,7 @@ export const PanelRequestSchema = z.discriminatedUnion('type', [
   GetSessionRequestSchema,
   ListRoutesRequestSchema,
   ListElementsRequestSchema,
+  ListInteractionsRequestSchema,
 ]);
 
 export type PanelRequest = z.infer<typeof PanelRequestSchema>;

@@ -3,13 +3,15 @@ import { useState } from 'react';
 import { usePanelStore } from './panelStore';
 import { OverviewPage } from './pages/OverviewPage';
 import { PagesPage } from './pages/PagesPage';
+import { InteractionsPage } from './pages/InteractionsPage';
 import { SettingsPage } from './pages/SettingsPage';
 
-type PageId = 'overview' | 'pages' | 'settings';
+type PageId = 'overview' | 'pages' | 'interactions' | 'settings';
 
 const NAV_ITEMS: ReadonlyArray<{ id: PageId; label: string }> = [
   { id: 'overview', label: 'Overview' },
   { id: 'pages', label: 'Pages' },
+  { id: 'interactions', label: 'Interactions' },
   { id: 'settings', label: 'Settings' },
 ];
 
@@ -44,6 +46,8 @@ export function App(): JSX.Element {
           <OverviewPage />
         ) : page === 'pages' ? (
           <PagesPage />
+        ) : page === 'interactions' ? (
+          <InteractionsPage />
         ) : (
           <SettingsPage />
         )}
