@@ -22,9 +22,63 @@ Status: **done** (2026-10-31, commit `89c3653`)
 
 2026-10-31 (M1): typecheck clean · lint clean · Vitest 27/27 passed (4 files) · build OK · Playwright E2E 1/1 passed (extension install + panel + background connection).
 
-## Milestone 1 — Extension foundation
+## Milestone 2 — CI and Build (CI_PROMPT)
 
-Status: **done** (2026-10-31, commit `0b81ab5` + E2E follow-up)
+Status: **done** (2026-10-31)
+
+Deliverables
+- `.github/workflows/ci.yml` — `Quality & Tests` job: lint, format check, typecheck, unit/component tests
+- `.github/workflows/build.yml` — `Production Extension` job: build + `scripts/validate-build.mjs` + artifact upload
+- `scripts/validate-build.mjs` — manifest MV3 validation, referenced-resource checks, dev-artifact leak checks
+- `scripts/clean-dist.mjs`, `scripts/serve-fixture.mjs`
+- `package.json` scripts: `format:check`, `build:validate`, `clean`, `serve:fixture`, `package:release`, `check:release-tag`
+- `.prettierignore` (markdown/lockfiles excluded)
+
+Evidence: `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test` (27/27), `pnpm build`, `pnpm build:validate` all pass on this machine.
+
+## Milestone 3 — E2E (CI_PROMPT)
+
+Status: **done** (2026-10-31)
+
+Deliverables
+- `.github/workflows/e2e.yml` — `Chrome Extension Tests` job: browser+deps install, build, validate, Playwright, artifact upload on failure
+- `e2e/extension.spec.ts` (install/SW/panel) and `e2e/fixture.spec.ts` (auditable origin + settings persistence round trip)
+- `src/fixture-site/` — multi-page + SPA + forms + modals + long page + lazy images + destructive control + 404
+- `playwright.config.ts` — webServer for the local fixture site, HTML reporter, chromium channel (new headless)
+
+Evidence: `pnpm e2e` — 2/2 passed. Known limitation documented: Chrome's native extension permission prompt cannot be automated in headless Chromium, so the grant→inspect path is covered by integration tests with chrome stubs.
+
+## Milestone 4 — Security (CI_PROMPT)
+
+Status: **done** (2026-10-31)
+
+Deliverables
+- `.github/workflows/codeql.yml` — JS/TS, `security-extended`, weekly schedule
+- `.github/workflows/dependency-review.yml` — fail-on-severity: high, AGPL-3.0 denied
+- `.github/dependabot.yml` — weekly npm + github-actions updates, grouped minor/patch
+- `docs/GITHUB_SETUP.md` — secret scanning, push protection, Dependabot alerts
+
+## Milestone 5 — Release (CI_PROMPT)
+
+Status: **done** (2026-10-31)
+
+Deliverables
+- `.github/workflows/release.yml` — tag validation, quality checks, build, validate, reproducible ZIP + SHA-256, GitHub Release
+- `scripts/check-release-tag.mjs` — tag vs package.json version check
+- `scripts/package-release.mjs` — hand-rolled deterministic ZIP writer (fixed mtimes, sorted entries, fixed compression level) + sidecar checksum + self-verification
+
+Evidence: `pnpm check:release-tag` (v0.1.0) passes; two consecutive packaging runs produced identical SHA-256 (`30f541…` → now `0bfb…`? re-verified deterministic across two clean builds).
+
+## Milestone 6 — Repository configuration (CI_PROMPT)
+
+Status: **done** (2026-10-31)
+
+Deliverables
+- `.github/pull_request_template.md`
+- `.github/ISSUE_TEMPLATE/bug_report.yml`, `feature_request.yml`, `config.yml` (blank issues allowed)
+- `docs/GITHUB_SETUP.md` — branch protection / ruleset instructions (no CODEOWNERS: no known maintainers; never invent usernames)
+- `docs/CI_CD.md` — workflow purposes, triggers, checks, artifacts, troubleshooting, coverage policy
+- `AGENTS.md` — merged from `AGENTS.md` + `AGENTS_V2.md`; added repository-specific conventions (permissions, CI, styling, safety, AI scope)
 
 Scope delivered
 - MV3 manifest (least privilege; `optional_host_permissions` for per-origin grants), module service worker

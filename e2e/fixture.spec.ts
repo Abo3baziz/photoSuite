@@ -19,7 +19,10 @@ import { fileURLToPath } from 'node:url';
 const DIST = fileURLToPath(new URL('../dist', import.meta.url));
 const FIXTURE_URL = 'http://127.0.0.1:4173/';
 
-async function loadExtension(): Promise<{ context: Awaited<ReturnType<typeof chromium.launchPersistentContext>>; extensionId: string }> {
+async function loadExtension(): Promise<{
+  context: Awaited<ReturnType<typeof chromium.launchPersistentContext>>;
+  extensionId: string;
+}> {
   const context = await chromium.launchPersistentContext('', {
     headless: true,
     channel: 'chromium',
@@ -55,7 +58,9 @@ test('panel audits the active fixture tab and persists settings through the back
 
     // FR-02: auditable origin facts shown.
     await expect(panelPage.getByText('Connected to background')).toBeVisible();
-    await expect(panelPage.locator('.facts__url', { hasText: FIXTURE_URL.replace(/\/$/, '') })).toBeVisible({ timeout: 10_000 });
+    await expect(
+      panelPage.locator('.facts__url', { hasText: FIXTURE_URL.replace(/\/$/, '') }),
+    ).toBeVisible({ timeout: 10_000 });
     await expect(panelPage.getByText('Auditor Fixture — Home')).toBeVisible();
 
     // Pre-grant guard: prompt affordance present, Inspect not yet available.
@@ -65,7 +70,9 @@ test('panel audits the active fixture tab and persists settings through the back
 
     // Real persistence round trip through the background (chrome.storage).
     await panelPage.getByRole('button', { name: 'Settings' }).click();
-    const maxRoutesInput = panelPage.locator('label', { hasText: 'Maximum routes' }).locator('input');
+    const maxRoutesInput = panelPage
+      .locator('label', { hasText: 'Maximum routes' })
+      .locator('input');
     await expect(maxRoutesInput).toHaveValue('100');
     await maxRoutesInput.fill('50');
     await panelPage.getByRole('button', { name: 'Save settings' }).click();
@@ -73,12 +80,16 @@ test('panel audits the active fixture tab and persists settings through the back
 
     await panelPage.reload();
     await panelPage.getByRole('button', { name: 'Settings' }).click();
-    await expect(panelPage.locator('label', { hasText: 'Maximum routes' }).locator('input')).toHaveValue('50');
+    await expect(
+      panelPage.locator('label', { hasText: 'Maximum routes' }).locator('input'),
+    ).toHaveValue('50');
 
     // Restore defaults so the test leaves a clean profile.
     await panelPage.getByRole('button', { name: 'Reset to defaults' }).click();
     await expect(panelPage.getByText('Reset to defaults.')).toBeVisible();
-    await expect(panelPage.locator('label', { hasText: 'Maximum routes' }).locator('input')).toHaveValue('100');
+    await expect(
+      panelPage.locator('label', { hasText: 'Maximum routes' }).locator('input'),
+    ).toHaveValue('100');
   } finally {
     await context.close();
   }

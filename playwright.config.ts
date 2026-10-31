@@ -7,10 +7,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 1,
-  reporter: [
-    ['list'],
-    ['html', { open: 'never' }],
-  ],
+  reporter: [['list'], ['html', { open: 'never' }]],
   // Local fixture site (no external websites in tests, per CI contract).
   webServer: {
     command: 'node scripts/serve-fixture.mjs 4173',

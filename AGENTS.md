@@ -1,59 +1,662 @@
-# AGENTS.md — Repository Working Agreement
+# AGENTS.md
 
-Rules for humans and AI agents working in this repository.
+# Project Development Guidelines
 
-## Product
+## 1. Purpose
 
-**web-ui-auditor** — a Chrome Manifest V3 extension that audits websites: discovers same-origin routes and interactive elements, executes *safe* interactions, captures screenshots of UI states, collects diagnostics, persists audit history locally, and produces an interactive offline report.
+This file defines the development rules and expectations for anyone contributing to this repository, including AI coding agents and human developers.
 
-> Note: the repository directory is `photoSuite` for historical reasons; the package, product, and documentation refer to `web-ui-auditor`.
+**Product**: Web UI Auditor (`web-ui-auditor`). The repository directory is `photoSuite` for historical reasons; the package name, manifest name, and documentation all use `web-ui-auditor`. Do not rename the directory.
 
-## Non-negotiable architecture rules
+**Styling**: plain hand-rolled CSS with design tokens (docs/TECHNICAL_DECISIONS.md D9). Tailwind CSS is explicitly excluded by user decision — do not reintroduce it.
 
-1. **Module boundaries are explicit.** `shared/` is pure, dependency-free TypeScript (no `chrome.*`, no DOM, no React). `background/`, `content/`, `panel/`, `db/`, `report/`, `export/` may import `shared/`; they must not import each other's internals — only their public entry modules.
-2. **No business logic in React components.** Components render state from a Zustand store fed by background messages / repositories. Logic lives in engines.
-3. **No `any`, no unsafe assertions.** TypeScript `strict` is on. Prefer discriminated unions. All cross-context data is validated with Zod before use.
-4. **Everything that crosses a context boundary is a typed message** defined in `shared/messaging/`. Content scripts and the panel never `import` background modules.
-5. **Data access only through repositories** (`db/repositories/`). Do not open Dexie tables ad hoc.
-6. **All persistence flows through the storage engine.** The background service worker is never the only holder of audit progress; it must be resumable after suspension.
-7. **Safety policy lives in `shared/safety/**`** and is enforced identically everywhere an action can be executed or suggested (including future AI — which is *out of scope* for the MVP and must not be implemented, only accommodated by clean interfaces).
-8. **No external network calls, telemetry, eval, or unsafe HTML injection.** Exported/imported metadata is Zod-validated.
-9. **Keep the content script lightweight**: selective observers, deduped scans, cleanup of listeners.
+**TypeScript**: pinned to 6.0.3 because `typescript-eslint` 8.x does not support TS 7.0 (see D8). Do not upgrade to TS 7 without first confirming typescript-eslint support and updating the lint config.
 
-## Coding standards
+The goal is to maintain a reliable, secure, understandable, and maintainable Chrome extension.
 
-- Language: TypeScript (strict, `noUncheckedIndexedAccess`).
-- Style: ESLint (`typescript-eslint`, `react-hooks`, `react-refresh`) + Prettier.
-- Naming: files `camelCase.ts`; classes/types `PascalCase`; entities nouns; engines end in `Engine`/`Manager` only when they own lifecycle.
-- Errors: explicit `Result`-style unions or thrown domain errors; no silent catches.
-- IDs: stable, deterministic where derivation is possible (e.g., element identity hash); time-based otherwise. See `docs/DATA_MODEL.md`.
+All contributors must follow these guidelines unless a project-specific requirement explicitly overrides them.
 
-## Testing expectations
+When instructions conflict, prioritize:
+1. Security and user safety.
+2. Correctness and existing project architecture.
+3. Explicit project requirements.
+4. These development guidelines.
+5. Personal implementation preferences.
 
-- Unit tests for all pure logic (URL rules, classification, fingerprinting, schemas, scheduling).
-- Vitest + jsdom + React Testing Library for panel components; Vitest + `fake-indexeddb` for database repositories.
-- Playwright E2E with a loaded unpacked extension against `src/fixture-site/`.
-- **Never report a test as passing unless it actually ran and passed.** Document anything un-executable and why (see `docs/TESTING.md`).
-- Every fixed bug gets a regression test.
+---
 
-## Security constraints
+## 2. Before Making Changes
 
-- Least-privilege permissions: `sidePanel`, `storage`, `tabs`, `activeTab`, `scripting`, `downloads` (report save), `webNavigation`; `optional_host_permissions` for per-origin grants.
-- Never collect passwords or payment data; never transmit site content anywhere; everything stays local (IndexedDB/chrome.storage/disk via user-triggered export).
-- Never auto-execute destructive or irreversible actions. Risk classification is label-independent — it is one signal among structural signals.
+Before implementing anything:
 
-## Repository workflow (GitHub Flow)
+1. Read this file completely.
+2. Read `PROJECT_PROGRESS.md` if it exists.
+3. Review relevant documentation under `docs/`.
+4. Inspect the existing implementation before modifying it.
+5. Understand how the affected components interact.
+6. Check existing tests and conventions.
+7. Identify potential regressions and dependencies.
 
-- Work on feature branches from `main`: `feature/*`, `bugfix/*`, `refactor/*`, `docs/*`, `test/*`.
-- Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, `refactor:`).
-- Never commit directly to `main`. No history rewrites without authorization. No push/PR without explicit authorization.
-- Run typecheck + lint + relevant tests before committing.
+Do not assume that an existing implementation is incorrect simply because you would have implemented it differently.
 
-## Quality gates per milestone
+Do not rewrite working code unnecessarily.
 
-`pnpm typecheck && pnpm lint && pnpm test && pnpm build` (+ E2E where applicable) must pass before a milestone is declared done, and `PROJECT_PROGRESS.md` must be updated.
+### Ask questions when necessary
 
-## Documentation requirements
+If an important requirement or architectural decision is unclear:
 
-- Keep `docs/` and `PROJECT_PROGRESS.md` describing the **actual implemented state**, not aspirations.
-- Update docs in the same change as the behavior they describe.
+- Ask me before making a consequential decision.
+- Explain the available options.
+- Describe the advantages and disadvantages of each option.
+- Recommend an approach and explain why.
+
+Do not ask questions about minor implementation details that can be reasonably decided by inspecting the codebase.
+
+Make sensible low-impact decisions independently and document important ones.
+
+Never invent requirements or silently make assumptions that could significantly affect the product.
+
+---
+
+## 3. Engineering Principles
+
+Follow these principles throughout the project:
+
+- Prefer simple, readable solutions.
+- Keep implementations focused and avoid unnecessary abstractions.
+- Follow separation of concerns.
+- Avoid duplicated logic.
+- Keep modules and components reasonably small.
+- Use descriptive names for variables, functions, classes, and files.
+- Prefer composition over unnecessary inheritance.
+- Avoid premature optimization.
+- Avoid introducing dependencies without a clear reason.
+- Preserve existing functionality unless a change explicitly requires otherwise.
+
+Do not introduce a design pattern just because it is popular.
+
+Every abstraction should solve an actual problem.
+
+### Code quality
+
+- Use TypeScript strict mode.
+- Avoid `any`.
+- Use explicit types where they improve clarity.
+- Avoid unnecessary type assertions.
+- Handle errors explicitly.
+- Avoid empty catch blocks.
+- Avoid deeply nested conditionals where simpler structures are possible.
+- Avoid large functions responsible for unrelated operations.
+- Do not leave dead code or unused imports.
+- Do not leave unexplained TODOs or placeholder implementations.
+
+Do not hide errors simply to make tests pass.
+
+---
+
+## 4. Project Architecture
+
+Respect the existing architecture documented in `docs/ARCHITECTURE.md`.
+
+Keep responsibilities separated.
+
+The extension should maintain clear boundaries between:
+
+- Background service worker.
+- Content scripts.
+- Side panel UI.
+- Audit orchestration.
+- Route discovery.
+- Element discovery.
+- Interaction execution.
+- Safety validation.
+- Screenshot capture.
+- Diagnostics.
+- Local persistence.
+- Report generation.
+
+### Architecture rules
+
+- Avoid direct dependencies between unrelated modules.
+- Keep business logic outside presentation components.
+- Avoid putting application logic inside React components when it belongs in a dedicated module.
+- Use well-defined interfaces between major subsystems.
+- Validate external and persisted data at appropriate boundaries.
+- Handle service worker suspension and recovery correctly.
+- Avoid relying on undocumented browser behavior.
+- Use Chrome extension APIs according to Manifest V3 requirements.
+
+#### Module boundaries (project-specific)
+
+- `src/shared/**` is pure TypeScript: no `chrome.*`, no DOM, no React, no side effects. Everything else may import it; it imports nothing.
+- `src/background/**`, `src/content/**`, `src/panel/**`, `src/db/**`, `src/report/**`, `src/export/**` may import `src/shared/**` only; they must not import each other's internals.
+- Data access goes through `src/db/repositories/**` only; do not open Dexie tables ad hoc.
+- Safety policy lives in `src/shared/safety/**` and is enforced identically wherever an action can be executed or suggested.
+- No external network calls, telemetry, `eval`, or unsafe HTML injection. Exported/imported metadata is Zod-validated.
+- Content scripts stay lightweight: selective observers, deduped scans, listener cleanup.
+
+Do not introduce AI functionality into the initial version.
+
+Future AI functionality must use the existing audit engine and must never bypass interaction safety checks.
+
+---
+
+## 5. Security and User Safety
+
+Security is a core requirement, not an optional improvement.
+
+### Browser interactions
+
+- Revalidate elements before interacting with them.
+- Check visibility and enabled state.
+- Avoid interacting with stale DOM references.
+- Classify actions according to their risk.
+- Require approval or block actions according to the defined safety policy.
+- Never assume an action is safe based only on its accessible name or button text.
+
+The extension must not automatically perform destructive or irreversible actions.
+
+Examples include:
+
+- Payments and purchases.
+- Account deletion.
+- Sending emails or messages.
+- Changing passwords.
+- Deleting important data.
+- Submitting sensitive forms.
+- Logging out of user accounts.
+
+### Data protection
+
+- Keep audit data local by default.
+- Do not transmit website content or screenshots to external services.
+- Do not collect passwords, payment information, or unnecessary personal data.
+- Avoid logging sensitive form values.
+- Use minimum required Chrome permissions.
+- Validate imported data and exported files.
+- Never commit secrets, tokens, credentials, or private configuration.
+
+When a security concern is discovered, explain its impact and address it rather than ignoring it.
+
+---
+
+## 6. Testing Requirements
+
+Every meaningful change must be tested.
+
+Choose tests appropriate to the change.
+
+### Unit tests
+
+Use unit tests for isolated functionality, including:
+
+- Route normalization.
+- Element identification.
+- Risk classification.
+- URL validation.
+- State fingerprinting.
+- Data validation.
+- Report generation.
+
+### Integration tests
+
+Test interactions between major subsystems.
+
+Examples:
+
+- Route discovery and navigation.
+- Element discovery and interaction execution.
+- Screenshot capture and persistence.
+- Audit orchestration and recovery.
+- Diagnostics and report generation.
+
+### End-to-end tests
+
+Use Playwright to test the actual Chrome extension.
+
+Test important user workflows, including:
+
+- Extension startup.
+- Side panel behavior.
+- Website inspection.
+- Route discovery.
+- Safe interactions.
+- UI state discovery.
+- Screenshot capture.
+- Local persistence.
+- Report generation.
+- Dangerous action prevention.
+
+Use a dedicated local fixture website for repeatable tests.
+
+Do not make automated tests depend on random third-party websites.
+
+### Before completing a task
+
+Run the relevant checks:
+
+- ESLint.
+- TypeScript type checking.
+- Formatting validation.
+- Relevant unit tests.
+- Relevant integration tests.
+- Relevant E2E tests.
+- Production build when appropriate.
+
+If a check cannot be executed, explain why.
+
+Never claim that tests passed if they were not executed.
+
+Do not remove or weaken tests merely to make an implementation pass.
+
+---
+
+## 7. Git and GitHub Workflow
+
+Follow GitHub Flow.
+
+### Branching
+
+Never work directly on `main`.
+
+Create a separate branch for each task.
+
+Use these prefixes:
+
+| Prefix | Purpose |
+|---|---|
+| `feature/` | New functionality |
+| `bugfix/` | Bug fixes |
+| `refactor/` | Code restructuring without intended behavior changes |
+| `docs/` | Documentation changes |
+| `test/` | Test additions or improvements |
+| `chore/` | Maintenance and tooling |
+| `hotfix/` | Urgent production fixes |
+
+Examples:
+
+```text
+feature/route-discovery
+feature/audit-report
+bugfix/side-panel-state
+refactor/interaction-engine
+docs/testing-guide
+test/route-discovery
+chore/update-dependencies
+hotfix/unsafe-form-submission
+```
+
+Keep branches focused on one task.
+
+### Commits
+
+Follow Conventional Commits.
+
+Format:
+
+```text
+<type>(<scope>): <short description>
+```
+
+Common types:
+
+- `feat`: New functionality.
+- `fix`: Bug fix.
+- `refactor`: Internal restructuring.
+- `docs`: Documentation changes.
+- `test`: Test-related changes.
+- `chore`: Maintenance.
+- `build`: Build system changes.
+- `ci`: CI/CD changes.
+- `perf`: Performance improvements.
+- `security`: Security-related changes.
+
+Examples:
+
+```text
+feat(discovery): detect interactive elements in shadow DOM
+
+fix(navigation): prevent duplicate visits to the same route
+
+test(interactions): cover disabled button handling
+
+refactor(audit): separate route discovery from orchestration
+
+docs(architecture): document background service worker responsibilities
+
+ci(github): add Chrome extension E2E workflow
+
+chore(deps): update Playwright dependencies
+```
+
+### Commit message quality
+
+Commit messages must explain the actual change.
+
+Rules:
+
+1. Use clear, direct language.
+2. Describe what changed, not just which files were edited.
+3. Include the affected component or area when useful.
+4. Keep the subject concise and specific.
+5. Use the imperative mood where practical.
+6. Do not use vague descriptions.
+7. Do not exaggerate the importance of a change.
+8. Do not include unnecessary technical details in the subject.
+
+Avoid messages such as:
+
+```text
+fix: fix bug
+
+feat: improve functionality
+
+chore: update files
+
+fix: make things work
+
+feat: enhance user experience
+
+refactor: improve code quality
+```
+
+Prefer:
+
+```text
+fix(discovery): ignore hidden navigation links
+
+feat(report): show failed interactions separately
+
+fix(storage): restore audit metadata after browser restart
+
+refactor(screenshots): move image persistence into repository
+
+ci(e2e): upload Playwright traces when tests fail
+```
+
+### Commit descriptions
+
+For changes that need more explanation, include a body.
+
+Example:
+
+```text
+fix(audit): prevent repeated navigation to the same route
+
+Normalize URLs before adding them to the visited-route set.
+This prevents query parameter ordering from causing duplicate
+visits during route discovery.
+
+Add regression tests for normalized URL comparison.
+```
+
+The body should explain:
+- What changed.
+- Why it was necessary.
+- Any important implementation details.
+- Relevant limitations when applicable.
+
+Do not write a body just to repeat the subject.
+
+### Avoid AI-sounding commit messages
+
+Commit messages and descriptions must sound like ordinary engineering communication.
+
+Avoid:
+- Generic phrases such as "enhance overall experience".
+- Unnecessary marketing language.
+- Excessive adjectives.
+- Repeated summaries of obvious changes.
+- Artificially formal language.
+- Claims that are not supported by the implementation.
+- Emojis unless explicitly requested.
+
+Write as if explaining the change to another developer who will maintain this codebase.
+
+Do not mention that AI generated the change.
+
+### Pull requests
+
+All changes must go through pull requests targeting `main`.
+
+A PR should include:
+
+1. A descriptive title.
+2. A short explanation of the problem.
+3. What was changed.
+4. Important implementation decisions.
+5. Tests performed.
+6. Screenshots for UI changes where relevant.
+7. Known limitations.
+
+Keep PRs focused and reasonably small.
+
+Do not combine unrelated features, refactoring, and dependency updates into one PR unless there is a clear reason.
+
+Do not merge a PR or modify repository protection settings without authorization.
+
+---
+
+## 8. Documentation
+
+Documentation is part of the implementation.
+
+Keep documentation consistent with the actual codebase.
+
+Important project documents:
+
+```text
+AGENTS.md
+PROJECT_PROGRESS.md
+
+docs/
+├── ARCHITECTURE.md
+├── REQUIREMENTS.md
+├── DATA_MODEL.md
+├── IMPLEMENTATION_PLAN.md
+├── TECHNICAL_DECISIONS.md
+├── TESTING.md
+├── CI_CD.md
+└── GITHUB_SETUP.md
+```
+
+### Documentation rules
+
+- Update documentation when architecture or behavior changes.
+- Document important design decisions and their reasoning.
+- Document limitations and known issues.
+- Prefer concrete examples over vague explanations.
+- Do not document functionality that does not exist.
+- Remove outdated instructions when replacing an implementation.
+- Avoid duplicating the same information across multiple documents.
+
+### PROJECT_PROGRESS.md
+
+Keep this file updated when meaningful milestones are completed.
+
+Record:
+
+- Completed work.
+- Current implementation status.
+- Remaining tasks.
+- Known issues.
+- Important decisions.
+- Relevant next steps.
+
+Do not turn it into a detailed log of every file modification.
+
+---
+
+## 9. Dependencies and Tooling
+
+Before adding a dependency:
+
+1. Check whether the functionality already exists in the project.
+2. Consider whether native APIs are sufficient.
+3. Evaluate maintenance and security.
+4. Consider package size and performance.
+5. Explain why the dependency is necessary when the decision is significant.
+
+Prefer established, maintained dependencies.
+
+Use the existing package manager and lockfile.
+
+Do not introduce another package manager.
+
+Avoid unnecessary dependency upgrades unrelated to the task.
+
+---
+
+## 10. Performance and Reliability
+
+The extension should remain responsive when inspecting complex websites.
+
+Pay attention to:
+
+- Large DOM trees.
+- Repeated DOM queries.
+- Mutation observers.
+- Long-running audit sessions.
+- Screenshot storage.
+- IndexedDB operations.
+- Service worker suspension.
+- Memory consumption.
+- Event listener cleanup.
+- Navigation loops.
+- Duplicate interactions.
+
+Use reasonable limits for routes, actions, retries, and execution time.
+
+Support cancellation where appropriate.
+
+An interrupted audit should not corrupt previously saved results.
+
+Do not sacrifice safety or correctness for speed.
+
+---
+
+## 11. Error Handling and Logging
+
+Errors should be understandable and actionable.
+
+- Use consistent error handling.
+- Preserve useful diagnostic information.
+- Avoid swallowing exceptions.
+- Avoid exposing sensitive data in logs.
+- Distinguish between application errors, website errors, and browser limitations.
+- Provide useful messages in the UI.
+- Record failed interactions with enough context to investigate them.
+
+Do not report an interaction as successful merely because no exception was thrown.
+
+Verify that the expected UI state change occurred where practical.
+
+---
+
+## 12. Implementation Expectations
+
+For every task:
+
+1. Understand the requirement.
+2. Inspect the existing implementation.
+3. Identify affected modules.
+4. Plan the smallest reasonable solution.
+5. Implement the change.
+6. Add or update tests.
+7. Run relevant validation.
+8. Update documentation when necessary.
+9. Review the diff for unrelated changes.
+10. Provide a clear summary.
+
+Do not:
+- Modify unrelated files.
+- Reformat entire files without a reason.
+- Introduce unnecessary abstractions.
+- Remove existing functionality without approval.
+- Commit unfinished or untested work.
+- Push branches without permission.
+- Create pull requests without permission.
+- Claim completion when important requirements remain unmet.
+
+---
+
+## 13. Final Response Format
+
+After completing a task, provide a concise engineering summary.
+
+Use this structure:
+
+### Summary
+Explain what was implemented in plain language.
+
+### Changes
+List the important files and modules modified.
+
+### Testing
+List the checks actually executed and their results.
+
+### Decisions
+Explain important implementation choices.
+
+### Remaining Work
+Mention unresolved issues, limitations, or manual steps.
+
+### Commit
+Suggest a Conventional Commit message when relevant.
+
+Be specific and honest.
+
+Avoid generic statements such as:
+- "Everything is working perfectly."
+- "The implementation is fully optimized."
+- "All issues have been resolved."
+
+Only make claims that can be supported by the actual changes and test results.
+
+---
+
+## 15. Repository-Specific Conventions
+
+### Permissions (least privilege)
+
+Granted at install: `sidePanel`, `storage`, `tabs`, `activeTab`, `scripting`, `downloads`, `webNavigation`.
+
+Host access is granted per-origin at runtime through `chrome.permissions.request` from the panel context (user gesture required). Never declare install-time `host_permissions` and never use `<all_urls>`.
+
+The `debugger` permission is forbidden in the MVP (spec §5F). The `chrome.debugger` API must not be used.
+
+### Package manager and tooling
+
+- Package manager: pnpm (lockfile: `pnpm-lock.yaml`). Do not introduce npm/yarn lockfiles.
+- Node: `>=20` (CI uses 22).
+- TypeScript: 6.0.3 (see Purpose).
+- Lint/format/typecheck/test/build scripts are defined in `package.json`; CI runs them with `--frozen-lockfile`.
+
+### CI/CD
+
+- Workflows live in `.github/workflows/` (`ci.yml`, `build.yml`, `e2e.yml`, `codeql.yml`, `dependency-review.yml`, `release.yml`).
+- Required checks on `main`: `Quality & Tests`, `Production Extension`, `Chrome Extension Tests`, `CodeQL / Analyze`, `Dependency Review`.
+- Do not bypass required checks or modify branch protection without authorization.
+- Dependabot is configured in `.github/dependabot.yml` (weekly).
+
+### Styling
+
+Plain CSS only (D9). Tokens live in `src/panel/styles.css`. Do not add Tailwind or other utility frameworks.
+
+### Safety policy
+
+Risk classification must never rely on a control's label alone. See `src/shared/safety/**` (rules table + unit tests) and D5.
+
+### AI integration
+
+Out of scope for the MVP. Do not add AI packages, API clients, environment variables, or placeholder modules. Keep the `FindingSource` / `SuggestionPort` seams clean for future use.
+
+---
+
+## 14. General Rule
+
+Write code for the next developer who will maintain it, not just for the current task.
+
+Prefer understandable code, useful documentation, meaningful tests, and descriptive Git history over unnecessary complexity.
+
+When in doubt, choose the solution that is easiest to understand, verify, and maintain.

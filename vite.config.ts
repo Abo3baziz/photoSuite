@@ -17,6 +17,13 @@ export default defineConfig({
       input: {
         panel: 'panel.html',
       },
+      output: {
+        // Fixed names (no content hash) keep the dist tree reproducible;
+        // the extension ships with a version bump, not cache busting.
+        chunkFileNames: 'assets/[name].js',
+        entryFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name][extname]',
+      },
     },
   },
 });

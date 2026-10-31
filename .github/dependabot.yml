@@ -1,0 +1,40 @@
+version: 2
+updates:
+  # pnpm-managed npm dependencies (lockfile: pnpm-lock.yaml).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # all non-breaking updates ride together; majors stay separate PRs
+    groups:
+      minor-and-patch:
+        update-types:
+          - 'minor'
+          - 'patch'
+    labels:
+      - dependencies
+    commit-message:
+      prefix: 'chore(deps)'
+      include: scope
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+
+  # Reusable workflows / actions, pinned to full commit SHAs.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      minor-and-patch:
+        update-types:
+          - 'minor'
+          - 'patch'
+    labels:
+      - ci
+      - dependencies
+    commit-message:
+      prefix: 'ci(deps)'
+      include: scope
+    open-pull-requests-limit: 5

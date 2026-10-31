@@ -1,0 +1,93 @@
+name: Release
+
+# Tag-driven release: v1.2.3 → quality checks → build & validate →
+# reproducible ZIP + SHA-256 → GitHub Release with attached artifacts.
+# Chrome Web Store publishing is intentionally NOT part of this workflow.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  quality-and-tests:
+    name: Quality & Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate release tag against package.json
+        run: node scripts/check-release-tag.mjs
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Validate formatting
+        run: pnpm format:check
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Unit and component tests
+        run: pnpm test
+
+  package-and-release:
+    name: Package & Release
+    needs: quality-and-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # release job only — never exposed to other jobs
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build production extension
+        run: pnpm build
+
+      - name: Validate production build and manifest
+        run: pnpm build:validate
+
+      - name: Package reproducible ZIP and checksum
+        run: node scripts/package-release.mjs "${GITHUB_REF_NAME}"
+
+      - name: Verify checksum on disk
+        run: |
+          cd artifacts
+          sha256sum -c "web-ui-auditor-${GITHUB_REF_NAME}.zip.sha256"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          # Re-runs on the same tag update the existing release instead of failing.
+          files: artifacts/*
+          generate_release_notes: true
+          make_latest: 'true'
