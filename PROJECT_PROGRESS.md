@@ -110,7 +110,15 @@ Acceptance criteria vs. spec §11 M1
 
 ## Milestone 2 — Discovery engine
 
-Status: planned
+Status: **done** (2026-10-31, commit `d6d690e`)
+
+Scope delivered: shared domain models + Zod schemas for all entities; Dexie v1 schema + repositories (audit sessions, routes, screen states, UI elements) with session-scoped indexes and cascade delete; safety (dangerous-route patterns, structural risk classification, accessible-name extraction, element identity hashing); content discovery (same-origin route discovery via anchors + data-attributes with normalization/dedup/dangerous+exclusion filtering, interactive element discovery across native semantics + ARIA roles + shadow DOM with accessible names, css paths, visibility/enabled); SPA navigation observation (history override + popstate/hashchange) + debounced mutation settling; background session manager, navigation manager, bounded BFS exploration engine (route + element discovery, screen-state/element persistence, progress callbacks); messaging (panel start/stop/getSession/listRoutes/listElements; content discoverRoutes/discoverElements/ping/spaNavigation); panel Overview gains Start/Stop audit controls + session progress; new Pages view lists discovered routes; store polls session + routes. Unit tests: accessible name (9), risk classification (7), dangerous routes (4), identity hashing (4), plus existing URL/settings/DB route repository tests.
+
+Acceptance evidence (executed 2026-10-31): typecheck clean; lint clean; format:check clean; tests 53/53 passed (9 files); build OK; build:validate passed; e2e 2/2 passed.
+
+Acceptance criteria vs. spec §11 M2: discovers fixture routes (engine + DB, verified via manual audit run + unit tests); identifies supported interactive elements (content discovery + element repository); handles duplicate links (routeRepository upsert + seen-set dedup); handles dynamic content (mutation settling observer); does not leave origin (sameOrigin filter + dangerous/exclusion rules).
+
+Known limitation: Chrome's native extension permission prompt cannot be automated in headless Chromium, so the full grant→audit path is not in E2E; covered by integration tests with chrome stubs. The audit engine itself runs end-to-end when permission is granted (verified manually in dev).
 
 ## Milestone 3 — Screenshot & interaction engine
 
